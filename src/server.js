@@ -13,6 +13,8 @@ const moduleRoutes = require('./routes/modules');
 app.use('/api/v1/modules', moduleRoutes);
 const sessionRoutes = require('./routes/sessions');
 app.use('/api/v1/sessions', sessionRoutes);
+const analyticsRoutes = require('./routes/analytics');
+app.use('/api/v1/analytics', analyticsRoutes);
 
 // Endpoint untuk mengecek server dan database hidup
 app.get('/health', async (req, res) => {
