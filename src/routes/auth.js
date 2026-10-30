@@ -3,8 +3,24 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const pool = require('../db');
+const rateLimit = require('../middleware/rateLimit');
 
 const router = express.Router();
+
+// Pembatas percobaan login: hanya percobaan GAGAL yang dihitung.
+// PIN gambar hanya 6 x 6 x 6 = 216 kombinasi, jadi batasnya lebih ketat.
+const pinLimiter = rateLimit({
+  max: 5,
+  skipSuccessful: true,
+  keyFn: (req) => `${req.ip}:${req.body?.student_id}`,
+  message: 'Terlalu banyak percobaan, tunggu beberapa menit lalu coba lagi',
+});
+const loginLimiter = rateLimit({
+  max: 10,
+  skipSuccessful: true,
+  keyFn: (req) => `${req.ip}:${String(req.body?.email || '').toLowerCase()}`,
+  message: 'Terlalu banyak percobaan, tunggu beberapa menit lalu coba lagi',
+});
 
 const ICONS = ['cat', 'star', 'apple', 'car', 'ball', 'butterfly'];
 
@@ -14,7 +30,7 @@ const pinSchema = z.object({
   pin_sequence: z.array(z.enum(ICONS)).length(3),
 });
 
-router.post('/picture-pin', async (req, res) => {
+router.post('/picture-pin', pinLimiter, async (req, res) => {
   const parsed = pinSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ status: 'error', message: 'Data tidak valid' });
@@ -69,7 +85,7 @@ const loginSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ status: 'error', message: 'Email atau sandi tidak valid' });
