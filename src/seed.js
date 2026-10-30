@@ -1,4 +1,11 @@
 require('dotenv').config();
+
+// Seed berisi akun contoh dengan sandi yang diketahui umum.
+// Di production hanya boleh dijalankan dengan sengaja.
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEMO_SEED !== 'true') {
+  console.error('Seed ditolak di production. Set ALLOW_DEMO_SEED=true kalau memang sengaja.');
+  process.exit(1);
+}
 const bcrypt = require('bcrypt');
 const pool = require('./db');
 
